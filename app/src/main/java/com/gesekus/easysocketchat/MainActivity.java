@@ -13,8 +13,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -23,9 +27,13 @@ import socketio.Socket;
 public class MainActivity extends AppCompatActivity {
     private Socket socket;
     private EditText editTextMessage;
-    private TextView textView;
+    private String ip;
     private Button buttonSend;
-
+    private boolean connected = false;
+    List<MessageItem> messageItemList = new ArrayList<>();
+    RecyclerView recyclerView;
+    MessageRecyclerAdapter adapter;
+    
     // ExecutorService to run network operations on a background thread
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     // Handler to post results back to the main thread
@@ -38,8 +46,16 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         editTextMessage = findViewById(R.id.editTextText);
-        textView = findViewById(R.id.textView);
         buttonSend = findViewById(R.id.button); // Make sure you have a Button with id "button" in your layout
+
+
+        recyclerView = findViewById(R.id.recyclerView);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new MessageRecyclerAdapter(messageItemList);
+        recyclerView.setAdapter(adapter);
+
+
+
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -53,8 +69,11 @@ public class MainActivity extends AppCompatActivity {
         // Set up the button click listener
         buttonSend.setOnClickListener(v -> {
             String message = editTextMessage.getText().toString();
-            if (!message.isEmpty()) {
+            if (!message.isEmpty() && connected) {
                 sendMessage(message);
+            } else if (!connected) {
+                ip = message;
+                connectToServer();
             }
         });
     }
@@ -64,15 +83,16 @@ public class MainActivity extends AppCompatActivity {
             try {
                 // Assuming socketio.Socket has this constructor.
                 // Replace "10.5.148.212" with your server IP if it changes.
-                socket = new Socket("192.168.178.32", 7777);
+                socket = new Socket(ip, 7777);
                 if (socket.connect()) {
-                    updateUI("Verbunden mit dem Server");
+                    updateUI("Verbunden mit dem Server", true);
+                    connected = true;
                 }else{
-                    updateUI("Verbindung fehlgeschlagen");
+                    updateUI("Verbindung fehlgeschlagen", true);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
-                updateUI("Verbindung fehlgeschlagen: " + e.getMessage());
+                updateUI("Verbindung fehlgeschlagen: " + e.getMessage(), true);
             }
         });
     }
@@ -82,26 +102,31 @@ public class MainActivity extends AppCompatActivity {
             if (socket != null) {
                 try {
                     socket.write(String.format("%s\n", message));
+                    updateUI(message, false);
                     String answer = socket.readLine();
 
-                    updateUI("Server Antwort: " + answer);
+                    updateUI(answer, true);
 
                     if (message.contains(" over") || (answer != null && answer.contains(" over"))) {
                         socket.close();
-                        updateUI("Verbindung geschlossen.");
+                        updateUI("Verbindung geschlossen.", true);
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
-                    updateUI("Fehler bei der Kommunikation: " + e.getMessage());
+                    updateUI("Fehler bei der Kommunikation: " + e.getMessage(), true);
                 }
             } else {
-                updateUI("Nicht verbunden.");
+                updateUI("Nicht verbunden.", true);
             }
         });
     }
 
-    private void updateUI(final String text) {
-        mainThreadHandler.post(() -> textView.setText(text));
+    private void updateUI(final String text, boolean fromServer) {
+        mainThreadHandler.post(() -> {
+            messageItemList.add(new MessageItem(text, java.time.LocalDateTime.now(), fromServer));
+            adapter.notifyItemInserted(messageItemList.size() - 1);
+            recyclerView.scrollToPosition(messageItemList.size() - 1);
+        });
     }
 
     @Override

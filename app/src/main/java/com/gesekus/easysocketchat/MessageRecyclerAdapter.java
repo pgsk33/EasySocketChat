@@ -39,12 +39,12 @@ public class MessageRecyclerAdapter extends RecyclerView.Adapter<MessageRecycler
 
         if (messageItem.isFromServer()) {
             holder.messageContainer.setBackgroundColor(ContextCompat.getColor(context, R.color.darkGrey));
-            layoutParams.startToStart = ConstraintLayout.LayoutParams.UNSET;
-            layoutParams.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID;
-        } else {
-            holder.messageContainer.setBackgroundColor(ContextCompat.getColor(context, R.color.blue));
             layoutParams.endToEnd = ConstraintLayout.LayoutParams.UNSET;
             layoutParams.startToStart = ConstraintLayout.LayoutParams.PARENT_ID;
+        } else {
+            holder.messageContainer.setBackgroundColor(ContextCompat.getColor(context, R.color.blue));
+            layoutParams.startToStart = ConstraintLayout.LayoutParams.UNSET;
+            layoutParams.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID;
         }
 
         holder.messageContainer.setLayoutParams(layoutParams);

@@ -1,5 +1,6 @@
 package com.gesekus.easysocketchat;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -25,6 +26,7 @@ import java.util.concurrent.Executors;
 import socketio.Socket;
 
 public class MainActivity extends AppCompatActivity {
+    public static final String SAVED_PREFERENCES = "saved_preferences";
     private Socket socket;
     private EditText editTextMessage;
     private String ip;
@@ -33,6 +35,7 @@ public class MainActivity extends AppCompatActivity {
     List<MessageItem> messageItemList = new ArrayList<>();
     RecyclerView recyclerView;
     MessageRecyclerAdapter adapter;
+    SharedPreferences sharedPreferences;
     
     // ExecutorService to run network operations on a background thread
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
@@ -54,6 +57,16 @@ public class MainActivity extends AppCompatActivity {
         adapter = new MessageRecyclerAdapter(messageItemList);
         recyclerView.setAdapter(adapter);
 
+        buttonSend.setText("Connect");
+        editTextMessage.setText("IP");
+
+
+        sharedPreferences = getSharedPreferences(SAVED_PREFERENCES, MODE_PRIVATE);
+        ip = sharedPreferences.getString("ip", "0");
+        if (ip == null || ip.isEmpty()) {
+            ip = "IP";
+        }
+        editTextMessage.setText(ip);
 
 
 
@@ -62,9 +75,6 @@ public class MainActivity extends AppCompatActivity {
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
-
-        // Connect to the server in the background
-        connectToServer();
 
         // Set up the button click listener
         buttonSend.setOnClickListener(v -> {
@@ -85,7 +95,10 @@ public class MainActivity extends AppCompatActivity {
                 // Replace "10.5.148.212" with your server IP if it changes.
                 socket = new Socket(ip, 7777);
                 if (socket.connect()) {
-                    updateUI("Verbunden mit dem Server", true);
+                    updateUI("Verbunden mit dem Server (IP: " + ip + ")", true);
+                    sharedPreferences.edit().putString("ip", ip).apply();
+                    buttonSend.setText("Send");
+                    editTextMessage.setText("");
                     connected = true;
                 }else{
                     updateUI("Verbindung fehlgeschlagen", true);
@@ -114,9 +127,12 @@ public class MainActivity extends AppCompatActivity {
                 } catch (IOException e) {
                     e.printStackTrace();
                     updateUI("Fehler bei der Kommunikation: " + e.getMessage(), true);
+                    connected = false;
                 }
             } else {
                 updateUI("Nicht verbunden.", true);
+                connected = false;
+                connectToServer();
             }
         });
     }

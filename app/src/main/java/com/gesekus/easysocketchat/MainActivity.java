@@ -99,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 // Assuming socketio.Socket has this constructor.
                 // Replace "10.5.148.212" with your server IP if it changes.
-                socket = new Socket(ip, 7777);
+                socket = new Socket(ip, Integer.parseInt(port));
                 if (socket.connect()) {
                     updateUI("Verbunden mit dem Server IP: " + ip + " on Port: " + port, true);
                     sharedPreferences.edit().putString("ip", ip).apply();

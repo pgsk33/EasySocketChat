@@ -1,0 +1,42 @@
+package TimeServer;
+
+import java.io.IOException;
+import java.util.*;
+import socketio.*;
+
+public class TimeServer_SocketIO {
+    Socket socket;
+    ServerSocket serverSocket;
+    public static void main(String[] args) {
+        new TimeServer_SocketIO();
+    }
+
+    public TimeServer_SocketIO() {
+        try {
+            acceptConnection();
+            runServer();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void acceptConnection() throws IOException {
+        serverSocket = new ServerSocket(7777);
+        socket = serverSocket.accept();
+        System.out.println("Verbindung hergestellt!");
+    }
+
+    public void runServer() throws IOException {
+        while (true) {
+            String ergebnis = Calendar.getInstance().getTime().toString();
+            socket.write(ergebnis + "\n");
+            try {
+                Thread.sleep(1000);
+            }
+            catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+    }
+}

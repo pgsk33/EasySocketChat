@@ -30,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     private Socket socket;
     private EditText editTextMessage;
     private String ip;
+    private String port;
     private Button buttonSend;
     private boolean connected = false;
     List<MessageItem> messageItemList = new ArrayList<>();
@@ -57,14 +58,13 @@ public class MainActivity extends AppCompatActivity {
         adapter = new MessageRecyclerAdapter(messageItemList);
         recyclerView.setAdapter(adapter);
 
-        buttonSend.setText("Connect");
-        editTextMessage.setText("IP");
+        editTextMessage.setText("0.0.0.0:7777");
 
 
         sharedPreferences = getSharedPreferences(SAVED_PREFERENCES, MODE_PRIVATE);
-        ip = sharedPreferences.getString("ip", "0");
+        ip = sharedPreferences.getString("ip", "0.0.0.0:77 77");
         if (ip == null || ip.isEmpty()) {
-            ip = "IP";
+            ip = "IP:Port";
         }
         editTextMessage.setText(ip);
 
@@ -82,7 +82,13 @@ public class MainActivity extends AppCompatActivity {
             if (!message.isEmpty() && connected) {
                 sendMessage(message);
             } else if (!connected) {
-                ip = message;
+                try {
+                    String[] data = message.split(":");
+                    ip = data[0];
+                    port = data[1];
+                } catch (Exception e) {
+                    updateUI("Please enter a valid IP and Port. They have to be separated by a :", true);
+                }
                 connectToServer();
             }
         });
@@ -95,9 +101,8 @@ public class MainActivity extends AppCompatActivity {
                 // Replace "10.5.148.212" with your server IP if it changes.
                 socket = new Socket(ip, 7777);
                 if (socket.connect()) {
-                    updateUI("Verbunden mit dem Server (IP: " + ip + ")", true);
+                    updateUI("Verbunden mit dem Server IP: " + ip + " on Port: " + port, true);
                     sharedPreferences.edit().putString("ip", ip).apply();
-                    buttonSend.setText("Send");
                     editTextMessage.setText("");
                     connected = true;
                 }else{
@@ -116,6 +121,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     socket.write(String.format("%s\n", message));
                     updateUI(message, false);
+                    editTextMessage.setText("");
                     String answer = socket.readLine();
 
                     updateUI(answer, true);
@@ -151,6 +157,7 @@ public class MainActivity extends AppCompatActivity {
         executorService.execute(() -> {
             if (socket != null) {
                 try {
+                    socket.write(" over\n");
                     socket.close();
                 } catch (IOException e) {
                     e.printStackTrace();

@@ -1,10 +1,19 @@
 package com.gesekus.easysocketchat;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 public class MessageItem {
     private String message;
+
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
+    }
+
+    private String user;
     private LocalDateTime localDateTime;
 
     public boolean isFromServer() {
@@ -33,10 +42,18 @@ public class MessageItem {
 
     private boolean fromServer;
 
+    public MessageItem(String message, LocalDateTime localDateTime, boolean fromServer, String user) {
+        this.message = message;
+        this.localDateTime = localDateTime;
+        this.fromServer = fromServer;
+        this.user = user;
+    }
+
     public MessageItem(String message, LocalDateTime localDateTime, boolean fromServer) {
         this.message = message;
         this.localDateTime = localDateTime;
         this.fromServer = fromServer;
+        this.user = "System";
     }
 
 }

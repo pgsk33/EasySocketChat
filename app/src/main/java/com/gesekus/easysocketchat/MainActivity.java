@@ -4,6 +4,7 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -26,9 +27,11 @@ import java.util.concurrent.Executors;
 import socketio.Socket;
 
 public class MainActivity extends AppCompatActivity {
+    public String name;
     public static final String SAVED_PREFERENCES = "saved_preferences";
     private Socket socket;
     private EditText editTextMessage;
+    private TextView textViewName;
     private String ip;
     private String port;
     private Button buttonSend;
@@ -36,6 +39,7 @@ public class MainActivity extends AppCompatActivity {
     List<MessageItem> messageItemList = new ArrayList<>();
     RecyclerView recyclerView;
     MessageRecyclerAdapter adapter;
+    MessageThread messageThread;
     SharedPreferences sharedPreferences;
     
     // ExecutorService to run network operations on a background thread
@@ -50,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         editTextMessage = findViewById(R.id.editTextText);
+        textViewName = findViewById(R.id.nameText);
         buttonSend = findViewById(R.id.button); // Make sure you have a Button with id "button" in your layout
 
 
@@ -105,6 +110,9 @@ public class MainActivity extends AppCompatActivity {
                     sharedPreferences.edit().putString("ip", ip).apply();
                     editTextMessage.setText("");
                     connected = true;
+                    name = textViewName.getText().toString();
+                    messageThread = new MessageThread();
+                    messageThread.start();
                 }else{
                     updateUI("Verbindung fehlgeschlagen", true);
                 }
@@ -115,18 +123,44 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    public class MessageThread extends Thread{
+        @Override
+        public void run() {
+            while(true){
+                receiveMessage("");
+            }
+        }
+    }
+
+    public void receiveMessage(String answer) {
+        try {
+            answer = socket.readLine();
+            String[] answerArray = answer.split("&&%%user=");
+            String user = answerArray[1];
+            answer = answerArray[0];
+            updateUIChat(answer, true, user);
+        } catch (IOException e) {
+            Log.d("MainActivity", "Error receiving message: " + e.getMessage());
+        }
+        if (answer.contains(" over")) {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                Log.d("MainActivity", "Error closing socket: " + e.getMessage());
+            }
+            updateUI("Verbindung geschlossen.", true);
+        }
+    }
+
     private void sendMessage(final String message) {
         executorService.execute(() -> {
             if (socket != null) {
                 try {
-                    socket.write(String.format("%s\n", message));
-                    updateUI(message, false);
+                    socket.write(String.format(message + "&&%%user=" + name + "\n"));
+                    updateUIChat(message, false, name);
                     editTextMessage.setText("");
-                    String answer = socket.readLine();
 
-                    updateUI(answer, true);
-
-                    if (message.contains(" over") || (answer != null && answer.contains(" over"))) {
+                    if (message.contains(" over")) {
                         socket.close();
                         updateUI("Verbindung geschlossen.", true);
                     }
@@ -151,12 +185,21 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private void updateUIChat(final String text, boolean fromServer, String user) {
+        mainThreadHandler.post(() -> {
+            messageItemList.add(new MessageItem(text, java.time.LocalDateTime.now(), fromServer, user));
+            adapter.notifyItemInserted(messageItemList.size() - 1);
+            recyclerView.scrollToPosition(messageItemList.size() - 1);
+        });
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
         executorService.execute(() -> {
             if (socket != null) {
                 try {
+                    messageThread.interrupt();
                     socket.write(" over\n");
                     socket.close();
                 } catch (IOException e) {

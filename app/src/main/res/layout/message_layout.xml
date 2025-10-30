@@ -5,13 +5,70 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <com.google.android.material.button.MaterialButton
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/messageContainer"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:cornerRadius="10dp">
+    <TableLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
-    </com.google.android.material.button.MaterialButton>
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" >
+            <TextView
+                android:id="@+id/voidPlace"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="" />
+
+            <TextView
+                android:id="@+id/name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Name" />
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" >
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/messageContainer2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:cornerRadius="10dp"
+                android:textSize="20sp"
+                style="@style/Widget.Material3.Button.TextButton.Icon"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:text="Pa"
+                android:textAllCaps="true"
+                tools:ignore="MissingConstraints">
+
+            </com.google.android.material.button.MaterialButton>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/messageContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:cornerRadius="10dp"
+                tools:ignore="MissingConstraints">
+
+            </com.google.android.material.button.MaterialButton>
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" >
+            <TextView
+                android:id="@+id/voidPlace2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="" />
+
+            <TextView
+                android:id="@+id/date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Datum" />
+        </TableRow>
+
+    </TableLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

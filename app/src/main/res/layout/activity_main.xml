@@ -8,42 +8,75 @@
     android:background="@color/black"
     tools:context=".MainActivity">
 
+
     <LinearLayout
-        android:id="@+id/bottom_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
+        android:orientation="vertical"
+        android:id="@+id/bottom_layout"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
-
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/editTextText"
+        <EditText
+            android:id="@+id/nameText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/radius"
             android:ems="10"
-            android:layout_weight="1"
-            android:hint="Enter message"
-            android:inputType="textMultiLine"
-            android:padding="10dp"
-            android:textColor="@color/white"
-            android:layout_gravity="center_vertical"/>
+            android:inputType="text"
+            android:text="Name" />
 
-        <com.google.android.material.button.MaterialButton
-            style="@style/Widget.Material3.Button.IconButton"
-            android:layout_width="wrap_content"
-            app:iconTint="@color/white"
-            android:layout_height="wrap_content"
-            android:background="@drawable/radius"
-            android:backgroundTint="@color/black"
-            app:icon="@drawable/send_24px"
-            app:iconSize="30dp"
-            android:id="@+id/button"
-            app:cornerRadius="0dp"
-            android:layout_gravity="bottom">
-        </com.google.android.material.button.MaterialButton>
+        <LinearLayout
+            android:id="@+id/bottom_layout2"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal">
+
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/settingsButton"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:background="@drawable/radius"
+                android:backgroundTint="@color/black"
+                app:cornerRadius="0dp"
+                app:icon="@drawable/settings_24px_1_"
+                app:iconSize="30dp"
+                app:iconTint="@color/white">
+            </com.google.android.material.button.MaterialButton>
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/editTextText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_weight="1"
+                android:background="@drawable/radius"
+                android:ems="10"
+                android:hint="Enter message"
+                android:inputType="textMultiLine"
+                android:padding="10dp"
+                android:textColor="@color/white" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/button"
+                style="@style/Widget.Material3.Button.IconButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom"
+                android:background="@drawable/radius"
+                android:backgroundTint="@color/black"
+                app:cornerRadius="0dp"
+                app:icon="@drawable/send_24px"
+                app:iconSize="30dp"
+                app:iconTint="@color/white">
+
+            </com.google.android.material.button.MaterialButton>
+        </LinearLayout>
     </LinearLayout>
+
+
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"

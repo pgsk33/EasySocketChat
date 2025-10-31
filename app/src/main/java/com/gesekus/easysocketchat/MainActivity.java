@@ -153,6 +153,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void sendMessage(final String message) {
+
         executorService.execute(() -> {
             if (socket != null) {
                 try {

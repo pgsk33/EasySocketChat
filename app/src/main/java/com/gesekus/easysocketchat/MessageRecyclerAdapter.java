@@ -9,16 +9,16 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.material.button.MaterialButton;
 
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class MessageRecyclerAdapter extends RecyclerView.Adapter<MessageRecyclerAdapter.MyMessageViewHolder> {
-    private List<MessageItem> messageList;
+    private final List<MessageItem> messageList;
 
     public MessageRecyclerAdapter(List<MessageItem> messageList) {
         this.messageList = messageList;
@@ -40,24 +40,38 @@ public class MessageRecyclerAdapter extends RecyclerView.Adapter<MessageRecycler
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm");
         holder.messageContainer.setText(messageItem.getMessage());
-        holder.messageContainer2.setText(messageItem.getMessage());
         holder.date.setText(messageItem.getLocalDateTime().format(formatter));
         holder.name.setText(messageItem.getUser());
 
-        ConstraintLayout.LayoutParams layoutParams = (ConstraintLayout.LayoutParams) holder.messageContainer.getLayoutParams();
+        ConstraintLayout rootLayout = holder.rootLayout;
+        ConstraintSet constraintSet = new ConstraintSet();
+        constraintSet.clone(rootLayout);
 
         if (messageItem.isFromServer()) {
             holder.messageContainer.setBackgroundColor(ContextCompat.getColor(context, R.color.darkGrey));
-            holder.messageContainer2.setText(messageItem.getUser().substring(0, 2));
-            layoutParams.endToEnd = ConstraintLayout.LayoutParams.UNSET;
-            layoutParams.startToStart = ConstraintLayout.LayoutParams.PARENT_ID;
+            if(messageItem.getUser() != null && messageItem.getUser().length() >= 2) {
+                holder.messageContainer2.setText(messageItem.getUser().substring(0, 2));
+            }
+            holder.messageContainer2.setVisibility(View.VISIBLE);
+            holder.name.setVisibility(View.VISIBLE);
+
+            // Align message to the left
+            constraintSet.clear(R.id.messageContainer, ConstraintSet.END);
+            constraintSet.connect(R.id.messageContainer, ConstraintSet.START, R.id.messageContainer2, ConstraintSet.END, 8);
+            constraintSet.clear(R.id.name, ConstraintSet.END);
+            constraintSet.connect(R.id.name, ConstraintSet.START, R.id.messageContainer2, ConstraintSet.END, 8);
+
         } else {
             holder.messageContainer.setBackgroundColor(ContextCompat.getColor(context, R.color.blue));
-            layoutParams.startToStart = ConstraintLayout.LayoutParams.UNSET;
-            layoutParams.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID;
+            holder.messageContainer2.setVisibility(View.GONE);
+            holder.name.setVisibility(View.GONE);
+
+            // Align message to the right
+            constraintSet.clear(R.id.messageContainer, ConstraintSet.START);
+            constraintSet.connect(R.id.messageContainer, ConstraintSet.END, ConstraintSet.PARENT_ID, ConstraintSet.END);
         }
 
-        holder.messageContainer.setLayoutParams(layoutParams);
+        constraintSet.applyTo(rootLayout);
         holder.messageContainer.setTextColor(ContextCompat.getColor(context, R.color.white));
     }
 
@@ -67,6 +81,7 @@ public class MessageRecyclerAdapter extends RecyclerView.Adapter<MessageRecycler
     }
 
     static class MyMessageViewHolder extends RecyclerView.ViewHolder {
+        ConstraintLayout rootLayout;
         MaterialButton messageContainer;
         MaterialButton messageContainer2;
         TextView date;
@@ -75,6 +90,7 @@ public class MessageRecyclerAdapter extends RecyclerView.Adapter<MessageRecycler
 
         public MyMessageViewHolder(@NonNull View itemView) {
             super(itemView);
+            rootLayout = itemView.findViewById(R.id.root_layout);
             messageContainer = itemView.findViewById(R.id.messageContainer);
             messageContainer2 = itemView.findViewById(R.id.messageContainer2);
             date = itemView.findViewById(R.id.date);

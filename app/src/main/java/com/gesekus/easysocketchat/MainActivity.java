@@ -1,9 +1,11 @@
 package com.gesekus.easysocketchat;
 
 import android.content.SharedPreferences;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.format.Formatter;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -23,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import socketio.Socket;
 
@@ -31,17 +34,19 @@ public class MainActivity extends AppCompatActivity {
     public static final String SAVED_PREFERENCES = "saved_preferences";
     private Socket socket;
     private EditText editTextMessage;
+    private boolean settingsAreVisible = true;
     private TextView textViewName;
     private String ip;
     private String port;
     private Button buttonSend;
+    private Button settingsButton;
     private boolean connected = false;
     List<MessageItem> messageItemList = new ArrayList<>();
     RecyclerView recyclerView;
     MessageRecyclerAdapter adapter;
     MessageThread messageThread;
     SharedPreferences sharedPreferences;
-    
+
     // ExecutorService to run network operations on a background thread
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     // Handler to post results back to the main thread
@@ -56,6 +61,7 @@ public class MainActivity extends AppCompatActivity {
         editTextMessage = findViewById(R.id.editTextText);
         textViewName = findViewById(R.id.nameText);
         buttonSend = findViewById(R.id.button); // Make sure you have a Button with id "button" in your layout
+        settingsButton = findViewById(R.id.settingsButton);
 
 
         recyclerView = findViewById(R.id.recyclerView);
@@ -63,16 +69,25 @@ public class MainActivity extends AppCompatActivity {
         adapter = new MessageRecyclerAdapter(messageItemList);
         recyclerView.setAdapter(adapter);
 
+        if (settingsAreVisible) {
+            textViewName.setVisibility(View.VISIBLE);
+        } else {
+            textViewName.setVisibility(View.GONE);
+        }
+
         editTextMessage.setText("0.0.0.0:7777");
 
 
         sharedPreferences = getSharedPreferences(SAVED_PREFERENCES, MODE_PRIVATE);
-        ip = sharedPreferences.getString("ip", "0.0.0.0:77 77");
+        ip = sharedPreferences.getString("ip", "0.0.0.0:7777");
+        name = sharedPreferences.getString("name", "Name");
         if (ip == null || ip.isEmpty()) {
             ip = "IP:Port";
         }
+        textViewName.setText(name);
         editTextMessage.setText(ip);
 
+        scanForOpenSockets();
 
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -97,6 +112,97 @@ public class MainActivity extends AppCompatActivity {
                 connectToServer();
             }
         });
+        settingsButton.setOnClickListener(v -> {
+            if (settingsAreVisible) {
+                settingsAreVisible = false;
+                textViewName.setVisibility(View.GONE);
+                name = textViewName.getText().toString();
+                sharedPreferences.edit().putString("name", name).apply();
+            } else {
+                settingsAreVisible = true;
+                textViewName.setVisibility(View.VISIBLE);
+            }
+        });
+    }
+
+    public boolean scanForOpenSockets() {
+        ExecutorService scannerExecutor = Executors.newFixedThreadPool(50);
+        AtomicBoolean serverFound = new AtomicBoolean(false);
+
+        executorService.execute(() -> {
+            try {
+                WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(WIFI_SERVICE);
+                String localIp = Formatter.formatIpAddress(wifiManager.getConnectionInfo().getIpAddress());
+                if (localIp != null) {
+                    if (localIp.startsWith("10.5.")) {
+                        String subnetPrefix = "10.5";
+                        for (int j = 0; j <= 255; j++) {
+                            if (serverFound.get()) {
+                                break;
+                            }
+                            for (int i = 1; i < 255; i++) {
+                                if (serverFound.get()) {
+                                    break;
+                                }
+                                final String host = subnetPrefix + "." + j + "." + i;
+                                scannerExecutor.execute(() -> {
+                                    if (serverFound.get()) {
+                                        return;
+                                    }
+                                    try {
+                                        Socket testSocket = new Socket(host, 7777);
+                                        if (testSocket.connect()) {
+                                            if (serverFound.compareAndSet(false, true)) {
+                                                testSocket.close();
+                                                ip = host;
+                                                port = "7777";
+                                                scannerExecutor.shutdownNow();
+                                                connectToServer();
+                                            } else {
+                                                testSocket.close();
+                                            }
+                                        }
+                                    } catch (IOException e) {
+                                        // Port is not open or host not reachable, continue scanning
+                                    }
+                                });
+                            }
+                        }
+                    } else {
+                        String subnet = localIp.substring(0, localIp.lastIndexOf("."));
+                        for (int i = 1; i < 255; i++) {
+                            final String host = subnet + "." + i;
+                            scannerExecutor.execute(() -> {
+                                if (serverFound.get()) {
+                                    return;
+                                }
+                                try {
+                                    Socket testSocket = new Socket(host, 7777);
+                                    if (testSocket.connect()) {
+                                        if (serverFound.compareAndSet(false, true)) {
+                                            testSocket.close();
+                                            ip = host;
+                                            port = "7777";
+                                            scannerExecutor.shutdownNow();
+                                            connectToServer();
+                                        } else {
+                                            testSocket.close();
+                                        }
+                                    }
+                                } catch (IOException e) {
+                                    // Port is not open or host not reachable, continue scanning
+                                }
+                            });
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                scannerExecutor.shutdown();
+            }
+        });
+        return connected;
     }
 
     private void connectToServer() {
@@ -107,13 +213,20 @@ public class MainActivity extends AppCompatActivity {
                 socket = new Socket(ip, Integer.parseInt(port));
                 if (socket.connect()) {
                     updateUI("Verbunden mit dem Server IP: " + ip + " on Port: " + port, true);
-                    sharedPreferences.edit().putString("ip", ip).apply();
-                    editTextMessage.setText("");
+                    sharedPreferences.edit().putString("ip", ip + ":" + port).apply();
                     connected = true;
-                    name = textViewName.getText().toString();
+
+                    mainThreadHandler.post(() -> {
+                        editTextMessage.setText("");
+                        name = textViewName.getText().toString();
+                        sharedPreferences.edit().putString("name", name).apply();
+                        textViewName.setVisibility(View.GONE);
+                    });
+
                     messageThread = new MessageThread();
                     messageThread.start();
-                }else{
+
+                } else {
                     updateUI("Verbindung fehlgeschlagen", true);
                 }
             } catch (IOException e) {
@@ -123,10 +236,10 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public class MessageThread extends Thread{
+    public class MessageThread extends Thread {
         @Override
         public void run() {
-            while(true){
+            while (true) {
                 receiveMessage("");
             }
         }
@@ -159,7 +272,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     socket.write(String.format(message + "&&%%user=" + name + "\n"));
                     updateUIChat(message, false, name);
-                    editTextMessage.setText("");
+                    mainThreadHandler.post(() -> editTextMessage.setText(""));
 
                     if (message.contains(" over")) {
                         socket.close();

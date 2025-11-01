@@ -2,73 +2,54 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root_layout"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:padding="8dp">
 
-    <TableLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/messageContainer2"
+        style="@style/Widget.Material3.Button.TextButton.Icon"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:textAllCaps="true"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        app:cornerRadius="40dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="AB" />
 
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" >
-            <TextView
-                android:id="@+id/voidPlace"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="" />
+    <TextView
+        android:id="@+id/name"
+        android:textColor="@color/white"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toEndOf="@id/messageContainer2"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Username" />
 
-            <TextView
-                android:id="@+id/name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Name" />
-        </TableRow>
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/messageContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        app:cornerRadius="10dp"
+        app:layout_constrainedWidth="true"
+        app:layout_constraintStart_toEndOf="@id/messageContainer2"
+        app:layout_constraintTop_toBottomOf="@id/name"
+        tools:text="This is a message that can be very long and should wrap." />
 
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" >
+    <TextView
+        android:id="@+id/date"
+        android:textColor="@color/white"
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/messageContainer2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:cornerRadius="10dp"
-                android:textSize="20sp"
-                style="@style/Widget.Material3.Button.TextButton.Icon"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                android:text="Pa"
-                android:textAllCaps="true"
-                tools:ignore="MissingConstraints">
-
-            </com.google.android.material.button.MaterialButton>
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/messageContainer"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:cornerRadius="10dp"
-                tools:ignore="MissingConstraints">
-
-            </com.google.android.material.button.MaterialButton>
-        </TableRow>
-
-        <TableRow
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" >
-            <TextView
-                android:id="@+id/voidPlace2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="" />
-
-            <TextView
-                android:id="@+id/date"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Datum" />
-        </TableRow>
-
-    </TableLayout>
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        app:layout_constraintStart_toStartOf="@id/messageContainer"
+        app:layout_constraintTop_toBottomOf="@id/messageContainer"
+        tools:text="12:34" />
 </androidx.constraintlayout.widget.ConstraintLayout>
